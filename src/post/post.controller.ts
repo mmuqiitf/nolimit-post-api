@@ -9,6 +9,7 @@ import {
   UseGuards,
   Req,
   HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PostService } from './post.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -35,7 +36,10 @@ export class PostController {
     const decoded = this.jwtService.verify(token);
 
     if (decoded.id != createPostDto.authorId) {
-      throw new HttpException('You cannot create a post', 401);
+      throw new HttpException(
+        'You cannot create a post',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     return this.postService.create(createPostDto);
@@ -53,13 +57,47 @@ export class PostController {
 
   @UseGuards(AuthGuard)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePostDto: UpdatePostDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updatePostDto: UpdatePostDto,
+    @Req() req: Request,
+  ) {
+    // get authorization token from request headers
+    const authorization = req.headers['authorization'];
+    const token = authorization.split(' ')[1];
+
+    // verify the token
+    const decoded = this.jwtService.verify(token);
+
+    if (decoded.id != updatePostDto.authorId) {
+      throw new HttpException(
+        'You cannot update a post',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     return this.postService.update(+id, updatePostDto);
   }
 
   @UseGuards(AuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @Req() req: Request) {
+    // get authorization token from request headers
+    const authorization = req.headers['authorization'];
+    const token = authorization.split(' ')[1];
+
+    // verify the token
+    const decoded = this.jwtService.verify(token);
+
+    const post = await this.postService.findOne(+id);
+
+    if (decoded.id != post.authorId) {
+      throw new HttpException(
+        'You cannot delete a post',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
     return this.postService.remove(+id);
   }
 }
