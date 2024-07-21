@@ -18,6 +18,9 @@ export class Post extends Model {
   id: bigint;
 
   @Column
+  title: string;
+
+  @Column
   content: string;
 
   @Column

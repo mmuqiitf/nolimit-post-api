@@ -18,9 +18,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async signIn(signInDto: SignInDto): Promise<{
-    access_token: string;
-  }> {
+  async signIn(signInDto: SignInDto) {
     const user = await this.userService.findOneByEmail(signInDto.email);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -31,17 +29,12 @@ export class AuthService {
       user.password,
     );
 
-    console.log('user', user);
-    console.log('isPasswordValid', isPasswordValid);
-
     if (!isPasswordValid) {
       throw new HttpException('Invalid password', HttpStatus.UNAUTHORIZED);
     }
 
-    const payload = { sub: user.id, username: user.email };
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-    };
+    const payload = { id: user.id, email: user.email };
+    return { access_token: this.jwtService.sign(payload) };
   }
 
   async signUp(createUserDto: CreateUserDto): Promise<User> {
