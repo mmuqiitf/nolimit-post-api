@@ -7,9 +7,11 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { PostModule } from './post/post.module';
 import { Post } from './post/post.model';
 import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     SequelizeModule.forRoot({
       dialect: 'mysql',
       host: 'localhost',

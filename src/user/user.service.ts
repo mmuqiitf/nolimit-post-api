@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { InjectModel } from '@nestjs/sequelize';
@@ -12,8 +12,21 @@ export class UserService {
     private userModel: typeof User,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
-    this.userModel.create({
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const hasUser = await this.userModel.findOne({
+      where: {
+        email: createUserDto.email,
+      },
+    });
+
+    if (hasUser) {
+      throw new HttpException(
+        'User already exists',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+
+    return this.userModel.create({
       name: createUserDto.name,
       email: createUserDto.email,
       password: createUserDto.password,
@@ -28,6 +41,14 @@ export class UserService {
 
   findOne(id: number): Promise<User> {
     return this.userModel.findByPk(id);
+  }
+
+  findOneByEmail(email: string): Promise<User> {
+    return this.userModel.findOne({
+      where: {
+        email,
+      },
+    });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
